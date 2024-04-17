@@ -1,22 +1,20 @@
 #!/usr/bin/python3
-"""
-Given a specific API, returns information about the user's TODO list progress
-"""
+""" returns to-do list information about employee ID """
 import json
 import requests
-from sys import argv
+from requests import get
 
-if __name__ == "__main__":
-    url = "https://jsonplaceholder.typicode.com/users"
-    response = requests.get(url)
-    users = response.json()
-    url = "https://jsonplaceholder.typicode.com/todos"
-    response = requests.get(url)
-    todos = response.json()
+
+if __name__ == '__main__':
+    APIurl = 'https://jsonplaceholder.typicode.com'
+    users = get(APIurl + "/users").json()
+
     with open("todo_all_employees.json", "w") as jsonfile:
-        json.dump({user.get("id"): [{"task": todo.get("title"),
-                                     "completed": todo.get("completed"),
-                                     "username": user.get("username")}
-                                    for todo in todos
-                                    if user.get("id") == todo.get("userId")]
-                  for user in users}, jsonfile)
+        json.dump({
+            i.get("id"): [{
+                "task": n.get("title"),
+                "completed": n.get("completed"),
+                "username": i.get("username")
+            }for n in requests.get(APIurl + "/todos",
+                                   params={"userId": i.get("id")}).json()]
+            for i in users}, jsonfile)
