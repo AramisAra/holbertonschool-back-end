@@ -1,19 +1,47 @@
 #!/usr/bin/python3
-""" returns to-do list information about employee ID """
+"""collecting data from API"""
 import json
-from requests import get
-from sys import argv
+import requests
+import sys
 
-if __name__ == '__main__':
-    APIurl = "https://jsonplaceholder.typicode.com"
-    employee = get(APIurl + "/users/{}".format(argv[1])).json()
-    to_do_list = get(APIurl + "/todos", params={
-        "userId": argv[1]}).json()
-    username = employee.get("username")
 
-    with open("{}.json".format(argv[1]), "w") as jsonfile:
-        json.dump({argv[1]: [{
-            "task": i.get("title"),
-            "completed": i.get("completed"),
-            "username": username
-                }for i in to_do_list]}, jsonfile)
+def todo_list(employee_id):
+    """
+    This function will fetch the URL, user info,
+    TODO list and display the employee progress
+    """
+
+    base_url = 'https://jsonplaceholder.typicode.com'
+
+    user_response = requests.get(f'{base_url}/users/{employee_id}')
+    user_data = user_response.json()
+    user_id = user_data['id']
+    username = user_data['username']
+
+    todos_response = requests.get(f'{base_url}/todos?userId={employee_id}')
+    todos_data = todos_response.json()
+
+    tasks = [{"task": todo['title'], "completed":
+             todo['completed'], "username": username}
+             for todo in todos_data]
+
+    # Export data to JSON
+    filename = f'{user_id}.json'
+    with open(filename, 'w') as jsonfile:
+        json.dump({str(user_id): tasks}, jsonfile)
+
+
+if __name__ == "__main__":
+    """Call the function"""
+
+    if len(sys.argv) != 2:
+        print("usage: python script.py <employee_id>")
+        sys.exit(1)
+
+    try:
+        employee_id = int(sys.argv[1])
+    except ValueError:
+        print("Employee ID must be an integer")
+        sys.exit(1)
+
+    todo_list(employee_id)

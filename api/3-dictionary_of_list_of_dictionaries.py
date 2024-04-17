@@ -1,20 +1,41 @@
 #!/usr/bin/python3
-""" returns to-do list information about employee ID """
+"""collecting data from API"""
 import json
 import requests
-from requests import get
 
 
-if __name__ == '__main__':
-    APIurl = 'https://jsonplaceholder.typicode.com'
-    users = get(APIurl + "/users").json()
+def fetch_all_todo_list():
+    # URL of the REST API
+    base_url = 'https://jsonplaceholder.typicode.com'
 
-    with open("todo_all_employees.json", "w") as jsonfile:
-        json.dump({
-            i.get("id"): [{
-                "task": n.get("title"),
-                "completed": n.get("completed"),
-                "username": i.get("username")
-            }for n in requests.get(APIurl + "/todos",
-                                   params={"userId": i.get("id")}).json()]
-            for i in users}, jsonfile)
+    # Fetch all users
+    users_response = requests.get(f'{base_url}/users')
+    users_data = users_response.json()
+
+    # Initialize dictionary to store tasks for all users
+    all_tasks = {}
+
+    # Iterate over each user
+    for user in users_data:
+        user_id = user['id']
+        username = user['username']
+
+        # Fetch user's TODO list
+        todos_response = requests.get(f'{base_url}/todos?userId={user_id}')
+        todos_data = todos_response.json()
+
+        # Prepare tasks for the user
+        user_tasks = [{"username": username, "task": todo['title'],
+                       "completed": todo['completed']} for todo in todos_data]
+
+        # Add tasks to the dictionary
+        all_tasks[str(user_id)] = user_tasks
+
+    # Export data to JSON
+    filename = 'todo_all_employees.json'
+    with open(filename, 'w') as jsonfile:
+        json.dump(all_tasks, jsonfile)
+
+
+if __name__ == "__main__":
+    fetch_all_todo_list()
